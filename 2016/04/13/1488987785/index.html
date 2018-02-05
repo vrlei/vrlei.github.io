@@ -1,0 +1,31 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><link rel="icon" href="/favicon.png"><link rel="alternate" type="application/rss+xml" title="VRLei.COM - 虚拟现实门户网" href="https://jysperm.me/atom.xml"><link rel="stylesheet" href="/styles.css"><title>VR公司常说的异步时间扭曲技术是个什么鬼？ | VRLei.COM - 虚拟现实门户网</title></head><body><div class="container"><div class="columns page-header"><h1>VRLei.COM - 虚拟现实门户网</h1></div><div class="columns"><div class="navigation"><nav class="menus-main"><a href="/" class="favicon"><img alt="VRLei.COM - 虚拟现实门户网" src="/favicon.png"></a><a href="/">首页</a></nav></div></div><div class="columns"><div class="block-body column three-fourths"><article><header><small class="right"><a target="_blank" href="null_posts%2F1488987785.md">查看源代码</a></small><h1>VR公司常说的异步时间扭曲技术是个什么鬼？</h1></header><div class="article-meta clearfix"><time class="left">2016-04-13</time><ul class="tags left"><li><a href="/categories/vr-e8-b5-84-e8-ae-af/">vr%e8%b5%84%e8%ae%af</a></li></ul><ul class="tags right"></ul></div><div class="markdown-body"><p>如果你经常听国内一些技术流的VR创业公司的演讲，那么你对“异步时间扭曲”（ATW）这个词肯定不会陌生。例如自称国内第一家掌握ATW技术的焰火工坊，在他们的第一次发布会上CTO王明杨就提到了这项技术。当时他尝试了进行解释，但后来放弃了，只说“你们知道这很牛逼就行了”。此后CEO娄池也在各种场合提起ATW，包括微信朋友圈。另外一家公司乐相也是。</p>
+<p>  　　“异步时间扭曲”这个名称听起来很牛，但了解它实际含义的人可能不多。</p>
+<p><strong>一种生成中间帧的技术</strong></p>
+<p>异步时间扭曲英文是Asynchronous Timewarp，简称ATW。简单来说，这是一种生成中间帧的技术。当游戏画面无法保持足够的帧率时，它能产生中间帧进行弥补，从而维持较高的画面刷新率。这项技术的提出者John Carmack目前是Oculus的CTO。</p>
+<p>我们采访了王明杨来解释ATW，他是这样说的：</p>
+<p>正常情况下，我们的手机大部分是60hz刷新，也就是说，在理想情况下我们的手机大概要处理有60帧/秒。那么，从数据到渲染就有 1000 /60 ~= 16.6666ms的时延。</p>
+<p>那么，如何抵消这个时延呢？卡马克（John Carmack）提出一种方法，通过大量采集陀螺仪数据，在样本足够多的情况下，就可以预测出16.66ms后你头部应有的旋转和位置，按照这个预测的数据来渲染，他管这个技术叫Timewarp。</p>
+<p>然而问题又来了，一般VR场景很复杂，我们很难保证每次都在16.66ms内完成一次渲染，也就是我们很难保证每个应用都是60fps。那么卡神又提出一个ATW，就是异步的Timewarp。</p>
+<p>他把VR应用的渲染管线设计成两个线程，渲染线程（生产者）和Timewarp线程（消费者），两者异步工作，生产者生产足够多的Framebuffer，消费者把生产者生产的东西做Timewarp之后贴在屏幕上。也就是说，无论你当前游戏的fps是多少，Timewarp始终被设计成保持在60fps（视刷新率而定）。</p>
+<p>这就是ATW的核心细节，把Timewarp和产生Framebuffer分离，用高刷新率的Timewarp来换取低时延。</p>
+<p>ATW技术在VR中应用的先驱是Oculus，一年多以前他们就在Gear VR上应用了这项技术，3月25日宣布在PC端的SDK上加入ATW的支持。（微信号：sinavc）</p>
+<p><strong>具体怎么做？</strong></p>
+<p>Oculus在博客里对ATW做了详细的解释。如上图所示，GPU给左右眼的画面分别进行渲染，然后在画面显示出来之前插入一个ATW的处理过程。在左边这帧的处理中，画面渲染及时完成，此时直接显示就行了；中间的第二帧渲染未能及时完成，此时如果什么都不做就会出现画面抖动，而有了ATW的话，它会将前面一帧调用出来重新显示，同时加上头盔运动变化，从而保持帧率。</p>
+<p><strong>这技术很难吗？</strong></p>
+<p><strong>据王明杨表示，ATW技术很简单，核心代码仅5行。</strong>但如果要达到最好的效果，还需要以下几点：</p>
+<p>1。 GPU必须支持抢占式上下文（GPU preemption）。这个还好，大部分Mobile GPU都支持，但是桌面GPU大部分还不支持；</p>
+<p>2。 系统最好支持主表面写入，这个跟GPU有一定关系，但是跟操作系统关系比较大；</p>
+<p>3。 GPU必须有较高的性能，这个很好理解，Timewarp线程实际上加重了渲染负担。</p>
+<p>Oculus先在Gear VR上实现ATW，原因就是上面的第1点。他们将ATW带到PC平台上，是在微软、英伟达和AMD支持的情况下实现的。英伟达开发了VRWorks，AMD则有Liquid VR。</p>
+<p>国内厂商中，乐相陈朝阳表示ARM对大朋VR提供了Front Buffer和Context Priority的支持，用以在移动VR上实现ATW。</p>
+<p>没有定制硬件的焰火工坊则在Oculus的基础上修改了一部分Timewarp的实现。“我们在渲染线程那里会监控Timewarp线程的工作情况，动态的平衡GPU附载，保证Timewarp线程工作在比较高的帧率下。”王明杨说。</p>
+<p><strong>有什么难点和局限？</strong></p>
+<p>听起来ATW是项很棒的技术，但它也不是完美的。根据去年的一篇Oculus博文，ATW的一个难点是位置抖动（Positional Judder）。</p>
+<p>位置抖动是基于方向的Timewarp带来明显瑕疵之一。在使用VR设备时，当头部移动了， 如果在ATW产生图像帧时只考虑了旋转，而平移却被忽略了。这意味着当你的头从一边移动到另一边时，你看见的离你很近的物体会有多个图像的抖动，这种效果在临近场空间中是非常明显的，比如下面的这个潜艇截图。</p>
+<p>Gear VR比较容易用上ATW，是因为它不支持位置追踪，而PC平台的Oculus Rift支持。Oculus最近宣布Rift支持ATW，应该是解决了位置抖动的问题。</p>
+<p>另外一点是运动的物体和动画。使用ATW时，动画或者移动的物体会引起另外一个瑕疵， 因为它产生的新图像只是根据前一帧图像生成的，缺少了物体的运动信息，所有的中间帧都好像是被冻结了一样，因而对于运动的物体容易产生抖动，见下图。</p>
+<p>不过王明杨倒是认为虽然近处物体是个局限，但影响并没想像的那么大。</p>
+<p><strong>总结</strong></p>
+<p>总体来说ATW确实是一项很棒的技术，如果没有它的话，开发者在游戏开发中为了保持画面帧率只能非常保守地使用CPU和GPU性能，而ATW可以游戏更容易保持帧率稳定，从而让开发者在画面设计上更加大胆。</p>
+<p>实际运行中Oculus发现，没有使用ATW的app在运行中丢失了约5%的帧。ATW可以将大部分丢失的帧补上，从而大幅减少画面抖动。而这一切对app来说不需要消耗更多性能或更改代码就能实现。Oculus还表示这一切只是开始，他们正与合作伙伴尝试提高ATW的运行效率。</p>
+</div></article></div><div class="block-sidebar column one-fourth"><div class="widget tags"></div><div class="widget archives"><ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/02/">February 2018</a><span class="archive-list-count">270</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/11/">November 2016</a><span class="archive-list-count">106</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/10/">October 2016</a><span class="archive-list-count">84</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/08/">August 2016</a><span class="archive-list-count">20</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/07/">July 2016</a><span class="archive-list-count">108</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/06/">June 2016</a><span class="archive-list-count">284</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/05/">May 2016</a><span class="archive-list-count">71</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/04/">April 2016</a><span class="archive-list-count">126</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/03/">March 2016</a><span class="archive-list-count">90</span></li></ul></div><div class="widget text-content"><p>该博客使用基于 &nbsp;<a href="http://hexo.io">Hexo</a>&nbsp; 的 &nbsp;<a href="https://github.com/jysperm/hexo-theme-simpleblock">simpleblock</a>&nbsp; 主题。博客内容使用 &nbsp;<a href="http://creativecommons.org/licenses/by-nc-sa/3.0/cn">CC BY-NC-SA 3.0</a>&nbsp; 授权发布。最后生成于 2018-02-05.</p></div></div></div></div></body></html>
